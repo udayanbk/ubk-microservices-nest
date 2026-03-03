@@ -25,3 +25,12 @@ model Product {
   createdAt   DateTime @default(now())
 
 }
+
+model Inventory {
+
+  id        String   @id @default(uuid())
+  productId String   @unique
+  stock     Int
+  updatedAt DateTime @updatedAt
+
+}

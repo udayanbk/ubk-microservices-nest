@@ -1,8 +1,42 @@
+import { PrismaService } from '@ecom/database';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class InventoryServiceService {
+export class InventoryService {
+
+  constructor(private prisma: PrismaService) {}
+  
+
   getHello(): string {
     return 'Hello World!';
+  }
+
+  async setStock(productId: string, stock: number) {
+
+    console.log("📦 Setting stock:", productId, stock);
+
+    return this.prisma.inventory.upsert({
+      where: { productId },
+      update: { stock },
+      create: { productId, stock }
+    });
+  }
+
+  async reduceStock(productId: string, quantity: number) {
+
+    console.log("🔻 Reducing stock:", productId, quantity);
+
+    const item = await this.prisma.inventory.findUnique({
+      where: { productId }
+    });
+
+    if (!item || item.stock < quantity) {
+      throw new Error("Insufficient stock");
+    }
+
+    return this.prisma.inventory.update({
+      where: { productId },
+      data: { stock: item.stock - quantity }
+    });
   }
 }

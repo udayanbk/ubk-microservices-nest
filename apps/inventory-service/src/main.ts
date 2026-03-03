@@ -1,10 +1,10 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 import { NestFactory } from '@nestjs/core';
-import { InventoryServiceModule } from './inventory.module';
+import { InventoryModule } from './inventory.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(InventoryServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  const app = await NestFactory.create(InventoryModule);
+  await app.listen(process.env.INVENTORY_PORT!);
 }
 bootstrap();
