@@ -1,10 +1,21 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
-import { NestFactory } from '@nestjs/core';
-import { OrderServiceModule } from './order.module';
+
+import { NestFactory } from "@nestjs/core";
+import { OrderModule } from "./order.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(OrderServiceModule);
-  await app.listen(process.env.port ?? 3000);
+
+  console.log("🚀 Starting Order Service...");
+
+  const app = await NestFactory.create(OrderModule);
+
+  const port = process.env.ORDER_PORT || 9905;
+
+  await app.listen(port);
+
+  console.log("🟢 Order Service running on port:", port);
+
 }
+
 bootstrap();

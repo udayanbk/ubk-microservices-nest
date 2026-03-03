@@ -34,3 +34,14 @@ model Inventory {
   updatedAt DateTime @updatedAt
 
 }
+
+model Order {
+
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int
+  status    String
+  createdAt DateTime @default(now())
+
+}

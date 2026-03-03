@@ -13,13 +13,12 @@ async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
 
   // 1️⃣ JWT middleware
-  app.use((req, res, next) => {
+  app.use((req: any, res, next) => {
 
     console.log("Incoming request:", req.method, req.url);
 
     const path = req.url.split("/")[1];
 
-    // Allow auth routes
     if (path === "auth") {
       console.log("Auth route — skipping JWT validation");
       return next();
@@ -34,18 +33,22 @@ async function bootstrap() {
 
     try {
       const jwt = require("jsonwebtoken");
+
       const token = authHeader.split(" ")[1];
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      console.log("🟢 JWT verified:", decoded);
+      console.log("🟢 JWT verified at Gateway:", decoded);
 
-      req.user = decoded;
+      // ✅ Attach userId to headers
+      req.headers["x-user-id"] = decoded.userId;
 
       next();
 
     } catch (err) {
+
       console.log("❌ Invalid token");
+
       return res.status(401).json({ error: "Invalid token" });
     }
   });
