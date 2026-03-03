@@ -1,10 +1,21 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
-import { NestFactory } from '@nestjs/core';
-import { ProductServiceModule } from './product.module';
+
+import { NestFactory } from "@nestjs/core";
+import { ProductModule } from "./product.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(ProductServiceModule);
-  await app.listen(process.env.port ?? 3000);
+
+  console.log("🚀 Starting Product Service...");
+
+  const app = await NestFactory.create(ProductModule);
+
+  const port = process.env.PRODUCT_PORT || 9903;
+
+  await app.listen(port);
+
+  console.log("🟢 Product Service running on port:", port);
+
 }
+
 bootstrap();
