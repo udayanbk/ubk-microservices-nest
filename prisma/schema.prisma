@@ -55,3 +55,12 @@ model Payment {
   createdAt DateTime @default(now())
 
 }
+
+model Idempotency {
+
+  id        String   @id @default(uuid())
+  key       String   @unique
+  orderId   String?
+  createdAt DateTime @default(now())
+
+}

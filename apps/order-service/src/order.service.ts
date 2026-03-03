@@ -11,86 +11,114 @@ export class OrderService {
     private http: HttpService
   ) { }
 
-  async createOrder(userId: string, productId: string, quantity: number) {
+async createOrder(
+  userId: string,
+  productId: string,
+  quantity: number,
+  idempotencyKey: string
+) {
 
-    console.log("🛒 Starting Order Saga");
+  console.log("🛒 Starting Order Saga");
 
-    let order;
+  // ✅ STEP 1 — Check idempotency FIRST
+  console.log("🔎 Checking idempotency key");
 
-    try {
+  const existing = await this.prisma.idempotency.findUnique({
+    where: { key: idempotencyKey }
+  });
 
-      // 1️⃣ Reduce inventory
-      await firstValueFrom(
-        this.http.post(
-          `${process.env.INVENTORY_SERVICE_URL}/inventory/reduce`,
-          { productId, quantity }
-        )
-      );
+  if (existing?.orderId) {
 
-      console.log("✅ Inventory reduced");
+    console.log("⚠ Duplicate request detected");
 
-      // 2️⃣ Create order
-      order = await this.prisma.order.create({
-        data: {
-          userId,
-          productId,
-          quantity,
-          status: "CREATED"
-        }
-      });
+    const order = await this.prisma.order.findUnique({
+      where: { id: existing.orderId }
+    });
 
-      console.log("📦 Order created:", order.id);
-
-      // 3️⃣ Process payment
-      const payment = await firstValueFrom(
-        this.http.post(
-          `${process.env.PAYMENT_SERVICE_URL}/payments/process`,
-          {
-            orderId: order.id,
-            amount: 100
-          }
-        )
-      );
-
-      console.log("💳 Payment success:", payment.data.id);
-
-      // 4️⃣ Mark order as PAID
-      const updated = await this.prisma.order.update({
-        where: { id: order.id },
-        data: { status: "PAID" }
-      });
-
-      console.log("✅ Order marked PAID");
-
-      return updated;
-
-    } catch (error) {
-
-      console.log("❌ Saga failed:", error.message);
-
-      // COMPENSATION LOGIC
-
-      if (order) {
-        await this.prisma.order.update({
-          where: { id: order.id },
-          data: { status: "FAILED" }
-        });
-        console.log("⚠ Order marked FAILED");
-      }
-
-      // Restore inventory
-      await firstValueFrom(
-        this.http.post(
-          `${process.env.INVENTORY_SERVICE_URL}/inventory/increase`,
-          { productId, quantity }
-        )
-      );
-
-      console.log("♻ Inventory restored correctly");
-
-      throw new Error("Order processing failed");
-    }
+    return order;
   }
+
+  // 🔥 If not duplicate, continue saga
+  let order;
+
+  try {
+
+    // 2️⃣ Reduce inventory
+    await firstValueFrom(
+      this.http.post(
+        `${process.env.INVENTORY_SERVICE_URL}/inventory/reduce`,
+        { productId, quantity }
+      )
+    );
+
+    console.log("✅ Inventory reduced");
+
+    // 3️⃣ Create order
+    order = await this.prisma.order.create({
+      data: {
+        userId,
+        productId,
+        quantity,
+        status: "CREATED"
+      }
+    });
+
+    console.log("📦 Order created:", order.id);
+
+    // ✅ Store idempotency record immediately
+    await this.prisma.idempotency.create({
+      data: {
+        key: idempotencyKey,
+        orderId: order.id
+      }
+    });
+
+    console.log("🔐 Idempotency stored");
+
+    // 4️⃣ Call payment
+    await firstValueFrom(
+      this.http.post(
+        `${process.env.PAYMENT_SERVICE_URL}/payments/process`,
+        {
+          orderId: order.id,
+          amount: 100
+        }
+      )
+    );
+
+    console.log("💳 Payment success");
+
+    // 5️⃣ Mark order PAID
+    const updated = await this.prisma.order.update({
+      where: { id: order.id },
+      data: { status: "PAID" }
+    });
+
+    console.log("✅ Order marked PAID");
+
+    return updated;
+
+  } catch (error) {
+
+    console.log("❌ Saga failed:", error.message);
+
+    if (order) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { status: "FAILED" }
+      });
+    }
+
+    await firstValueFrom(
+      this.http.post(
+        `${process.env.INVENTORY_SERVICE_URL}/inventory/increase`,
+        { productId, quantity }
+      )
+    );
+
+    throw new Error("Order processing failed");
+  }
+}
 
   async listOrders() {
 

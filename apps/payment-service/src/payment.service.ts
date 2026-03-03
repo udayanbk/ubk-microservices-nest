@@ -10,10 +10,6 @@ export class PaymentService {
 
     console.log("💳 Processing payment for order:", orderId);
 
-    if (Math.random() < 0.5) {
-  throw new Error("Payment failed");
-}
-
     // Simulate success (later integrate Stripe)
     const payment = await this.prisma.payment.create({
       data: {
