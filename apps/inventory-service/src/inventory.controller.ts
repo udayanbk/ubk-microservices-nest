@@ -4,7 +4,7 @@ import { InventoryService } from "./inventory.service";
 @Controller("inventory")
 export class InventoryController {
 
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(private readonly inventoryService: InventoryService) { }
 
   @Post("setStock")
   async setStock(@Body() body: any) {
@@ -29,4 +29,16 @@ export class InventoryController {
       body.quantity
     );
   }
+
+  @Post("increase")
+  async increase(@Body() body: any) {
+
+    console.log("♻ /inventory/increase hit");
+
+    return this.inventoryService.increaseStock(
+      body.productId,
+      body.quantity
+    );
+  }
+
 }

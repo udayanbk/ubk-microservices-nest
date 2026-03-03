@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
-import { PaymentServiceController } from './payment.controller';
-import { PaymentServiceService } from './payment.service';
+import { Module } from "@nestjs/common";
+import { PrismaModule } from "@ecom/database";
+import { PaymentController } from "./payment.controller";
+import { PaymentService } from "./payment.service";
 
 @Module({
-  imports: [],
-  controllers: [PaymentServiceController],
-  providers: [PaymentServiceService],
+  imports: [PrismaModule],
+  controllers: [PaymentController],
+  providers: [PaymentService],
 })
-export class PaymentServiceModule {}
+export class PaymentModule {}

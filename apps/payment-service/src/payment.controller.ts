@@ -1,12 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
-import { PaymentServiceService } from './payment.service';
+import { Body, Controller, Post } from "@nestjs/common";
+import { PaymentService } from "./payment.service";
 
-@Controller()
-export class PaymentServiceController {
-  constructor(private readonly paymentServiceService: PaymentServiceService) {}
+@Controller("payments")
+export class PaymentController {
 
-  @Get()
-  getHello(): string {
-    return this.paymentServiceService.getHello();
+  constructor(private service: PaymentService) {}
+
+  @Post("process")
+  async process(@Body() body: any) {
+
+    console.log("🚀 /payments/process hit");
+
+    return this.service.processPayment(
+      body.orderId,
+      body.amount
+    );
   }
 }
