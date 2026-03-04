@@ -14,6 +14,8 @@ export class PaymentService {
     const paymentCall = async (payload: any) => {
 
       console.log("💳 Calling external payment gateway");
+      console.log("Order:", payload.orderId);
+      console.log("Amount:", payload.amount);
 
       if (Math.random() < 0.5) {
         throw new Error("Gateway failed");
@@ -44,9 +46,12 @@ export class PaymentService {
   //   return payment;
   // }
 
-  async processPayment(orderId: string) {
+  async processPayment(orderId: string, amount: number) {
     console.log("💳 Processing payment for order:", orderId);
-    const result = await this.paymentBreaker.fire({ orderId });
+    const result = await this.paymentBreaker.fire({
+      orderId,
+      amount
+    });
     console.log("✅ Payment success");
     return result;
 

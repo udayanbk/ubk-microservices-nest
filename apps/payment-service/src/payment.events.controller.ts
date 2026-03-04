@@ -1,6 +1,7 @@
 import { Controller, Inject } from "@nestjs/common";
 import { EventPattern, ClientKafka } from "@nestjs/microservices";
 import { PaymentService } from "./payment.service";
+import { retryWithBackoff } from "libs/common/retry";
 
 @Controller()
 export class PaymentEventsController {
@@ -12,37 +13,45 @@ export class PaymentEventsController {
     private kafkaClient: ClientKafka
   ) { }
 
-  @EventPattern('inventory.reserved')
-  async handleInventoryReserved(data: any) {
+@EventPattern('inventory.reserved')
+async handleInventoryReserved(data: any) {
 
-    console.log("🔥 RAW PAYMENT EVENT DATA:", data);
+  console.log("🔥 RAW PAYMENT EVENT DATA:", data);
 
-    const payload = data?.value ?? data;
+  const payload = data?.value ?? data;
 
-    console.log("💳 Parsed payload:", payload);
+  console.log("💳 Parsed payload:", payload);
 
-    try {
+  try {
+
+    await retryWithBackoff(async () => {
 
       await this.paymentService.processPayment(
         payload.orderId,
         100
       );
 
-      this.kafkaClient.emit('payment.processed', {
-        orderId: payload.orderId
-      });
+    }, 3);
 
-      console.log("📤 payment.processed emitted");
+    console.log("✅ Payment succeeded after retry logic");
 
-    } catch (error) {
+    this.kafkaClient.emit('payment.processed', {
+      orderId: payload.orderId
+    });
 
-      console.log("❌ Payment failed:", error.message);
+    console.log("📤 payment.processed emitted");
 
-      this.kafkaClient.emit('payment.failed', {
-        orderId: payload?.orderId
-      });
+  } catch (error) {
 
-      console.log("📤 payment.failed emitted");
-    }
+    console.log("❌ All retries failed:", error.message);
+
+    this.kafkaClient.emit('payment.failed', {
+      orderId: payload.orderId
+    });
+
+    console.log("📤 payment.failed emitted");
+
   }
+
+}
 }
