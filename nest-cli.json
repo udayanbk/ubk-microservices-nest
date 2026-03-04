@@ -46,6 +46,15 @@
         "tsConfigPath": "libs/database/tsconfig.lib.json"
       }
     },
+    "dlq-service": {
+      "type": "application",
+      "root": "apps/dlq-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/dlq-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/dlq-service/tsconfig.app.json"
+      }
+    },
     "dto": {
       "type": "library",
       "root": "libs/dto",

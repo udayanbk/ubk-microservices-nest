@@ -13,45 +13,53 @@ export class PaymentEventsController {
     private kafkaClient: ClientKafka
   ) { }
 
-@EventPattern('inventory.reserved')
-async handleInventoryReserved(data: any) {
+  @EventPattern('inventory.reserved')
+  async handleInventoryReserved(data: any) {
 
-  console.log("🔥 RAW PAYMENT EVENT DATA:", data);
+    console.log("🔥 RAW PAYMENT EVENT DATA:", data);
 
-  const payload = data?.value ?? data;
+    const payload = data?.value ?? data;
 
-  console.log("💳 Parsed payload:", payload);
+    console.log("💳 Parsed payload:", payload);
 
-  try {
+    try {
 
-    await retryWithBackoff(async () => {
+      await retryWithBackoff(async () => {
+        await this.paymentService.processPayment(
+          payload.orderId,
+          100
+        );
+      }, 3);
+      //------------------------forced failure-----------------------------
+      // throw new Error("FORCED PAYMENT FAILURE");
+      //-------------------------------------------------------------------
 
-      await this.paymentService.processPayment(
-        payload.orderId,
-        100
-      );
+      console.log("✅ Payment succeeded after retry logic");
 
-    }, 3);
+      this.kafkaClient.emit('payment.processed', {
+        orderId: payload.orderId
+      });
 
-    console.log("✅ Payment succeeded after retry logic");
+      console.log("📤 payment.processed emitted");
 
-    this.kafkaClient.emit('payment.processed', {
-      orderId: payload.orderId
-    });
+    } catch (error) {
 
-    console.log("📤 payment.processed emitted");
+      console.log("❌ All retries failed:", error.message);
 
-  } catch (error) {
+      // 1️⃣ Business failure (order saga must continue)
+      this.kafkaClient.emit('payment.failed', {
+        orderId: payload.orderId
+      });
 
-    console.log("❌ All retries failed:", error.message);
-
-    this.kafkaClient.emit('payment.failed', {
-      orderId: payload.orderId
-    });
-
-    console.log("📤 payment.failed emitted");
+      // 2️⃣ System failure log
+      this.kafkaClient.emit("payment.failed.dlq", {
+        topic: "inventory.reserved",
+        payload,
+        error: error.message,
+        service: "payment-service"
+      });
+      console.log("📤 catch block -- payment.failed emitted");
+    }
 
   }
-
-}
 }

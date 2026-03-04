@@ -17,9 +17,10 @@ export class PaymentService {
       console.log("Order:", payload.orderId);
       console.log("Amount:", payload.amount);
 
-      if (Math.random() < 0.5) {
-        throw new Error("Gateway failed");
-      }
+      //-------use following throw to check DLQ logs for payment failure----------------------------
+      // if (Math.random() < 0.3) {
+      //   throw new Error("Gateway failed");
+      // }
 
       return { success: true };
 
