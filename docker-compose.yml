@@ -1,7 +1,10 @@
+version: "3.9"
+
 services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
@@ -9,6 +12,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -16,7 +20,112 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5532:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  postgres_logs:
+    image: postgres:15
+    container_name: postgres_logs
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dlq_logs_db
+    ports:
+      - "5632:5432"
+    volumes:
+      - postgres_logs_data:/var/lib/postgresql/data
+
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+
+  order-service:
+    image: node:20
+    container_name: order-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/order-service/main.js
+    ports:
+      - "9915:9905"
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce
+      KAFKA_BROKER: kafka:29092
+
+
+  inventory-service:
+    image: node:20
+    container_name: inventory-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/inventory-service/main.js
+    ports:
+      - "9914:9904"
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce
+      KAFKA_BROKER: kafka:29092
+
+
+  payment-service:
+    image: node:20
+    container_name: payment-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/payment-service/main.js
+    ports:
+      - "9916:9906"
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce
+      KAFKA_BROKER: kafka:29092
+
+
+  dlq-service:
+    image: node:20
+    container_name: dlq-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/dlq-service/main.js
+    depends_on:
+      - kafka
+      - postgres_logs
+    environment:
+      LOGS_DATABASE_URL: postgresql://postgres:postgres@postgres_logs:5432/dlq_logs_db
+      KAFKA_BROKER: kafka:29092
+
+
+volumes:
+  postgres_data:
+  postgres_logs_data:
