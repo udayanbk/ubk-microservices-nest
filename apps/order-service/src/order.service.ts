@@ -10,7 +10,7 @@ export class OrderService {
 
     @Inject('KAFKA_SERVICE')
     private kafkaClient: ClientKafka
-  ) {}
+  ) { }
 
   async onModuleInit() {
     // Required for Kafka response topics
@@ -66,14 +66,27 @@ export class OrderService {
 
     console.log("🔐 Idempotency stored");
 
-    // 4️⃣ Emit event to Kafka
-    console.log("📤 Emitting order.created event");
+    // 4️⃣--1 Emit event to Kafka
+    // console.log("📤 Emitting order.created event");
+    // this.kafkaClient.emit('order.created', {
+    //   orderId: order.id,
+    //   productId,
+    //   quantity,
+    //   userId
+    // });
 
-    this.kafkaClient.emit('order.created', {
-      orderId: order.id,
-      productId,
-      quantity,
-      userId
+    // 4️⃣--2 Save event in outbox table
+    console.log("📤 Emitting order.created event");
+    await this.prisma.outboxEvent.create({
+      data: {
+        topic: "order.created",
+        payload: {
+          orderId: order.id,
+          productId,
+          quantity,
+          userId
+        }
+      }
     });
 
     // 5️⃣ Immediately return (async processing)
@@ -117,24 +130,24 @@ export class OrderService {
 
   async markPaid(orderId: string) {
 
-  console.log("🟢 Updating order to PAID:", orderId);
+    console.log("🟢 Updating order to PAID:", orderId);
 
-  return this.prisma.order.update({
-    where: { id: orderId },
-    data: { status: "PAID" }
-  });
-}
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: "PAID" }
+    });
+  }
 
 
-async markFailed(orderId: string) {
+  async markFailed(orderId: string) {
 
-  console.log("🔴 Updating order to FAILED:", orderId);
+    console.log("🔴 Updating order to FAILED:", orderId);
 
-  return this.prisma.order.update({
-    where: { id: orderId },
-    data: { status: "FAILED" }
-  });
-}
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: "FAILED" }
+    });
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

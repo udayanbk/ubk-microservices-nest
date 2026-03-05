@@ -1,3 +1,4 @@
+import { ScheduleModule } from "@nestjs/schedule";
 import { Module } from "@nestjs/common";
 // import { HttpModule } from "@nestjs/axios";
 import { PrismaModule } from "@ecom/database";
@@ -5,6 +6,7 @@ import { OrderController } from "./order.controller";
 import { OrderService } from "./order.service";
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { OrderEventsController } from "./order.events.controller";
+import { OutboxPublisher } from "./outbox.publisher";
 
 @Module({
   imports: [
@@ -22,10 +24,11 @@ import { OrderEventsController } from "./order.events.controller";
         },
       },
     ]),
-    PrismaModule
+    PrismaModule,
+    ScheduleModule.forRoot()
   ],
   controllers: [OrderController, OrderEventsController],
-  providers: [OrderService],
+  providers: [OrderService, OutboxPublisher],
 })
 
 // @Module({

@@ -167,9 +167,21 @@ exports.Prisma.IdempotencyScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.OutboxEventScalarFieldEnum = {
+  id: 'id',
+  topic: 'topic',
+  payload: 'payload',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -182,6 +194,12 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -189,7 +207,8 @@ exports.Prisma.ModelName = {
   Inventory: 'Inventory',
   Order: 'Order',
   Payment: 'Payment',
-  Idempotency: 'Idempotency'
+  Idempotency: 'Idempotency',
+  OutboxEvent: 'OutboxEvent'
 };
 
 /**

@@ -65,3 +65,13 @@ model Idempotency {
   createdAt DateTime @default(now())
 
 }
+
+model OutboxEvent {
+
+  id        String   @id @default(uuid())
+  topic     String
+  payload   Json
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+}
