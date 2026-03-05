@@ -5,10 +5,13 @@ import { NestFactory } from "@nestjs/core";
 import { ApiGatewayModule } from "./api-gateway.module";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { serviceMap } from "./service-map";
+import { createKafkaTopics } from "@ecom/kafka/kafka-topics";
 
 async function bootstrap() {
 
-  console.log("Starting Gateway...");
+  console.log("Starting Gateway..."); 
+
+  await createKafkaTopics();
 
   const app = await NestFactory.create(ApiGatewayModule);
 
