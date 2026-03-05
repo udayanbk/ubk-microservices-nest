@@ -1,6 +1,7 @@
 import { Controller, Inject } from "@nestjs/common";
 import { EventPattern, ClientKafka } from "@nestjs/microservices";
 import { InventoryService } from "./inventory.service";
+import { KafkaTopics } from "@ecom/kafka/topics";
 
 @Controller()
 export class InventoryEventsController {
@@ -12,7 +13,7 @@ export class InventoryEventsController {
     private kafkaClient: ClientKafka
   ) { }
 
-  @EventPattern('order.created')
+  @EventPattern(KafkaTopics.ORDER_CREATED)
   async handleOrderCreated(data: any) {
 
     console.log("🔥 RAW EVENT DATA:", data);
@@ -30,7 +31,7 @@ export class InventoryEventsController {
 
       console.log("✅ Stock reduced successfully");
 
-      this.kafkaClient.emit('inventory.reserved', {
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, {
         orderId: payload.orderId,
         productId: payload.productId,
         quantity: payload.quantity
@@ -42,7 +43,7 @@ export class InventoryEventsController {
 
       console.log("❌ Stock reduction failed:", error.message);
 
-      this.kafkaClient.emit('inventory.failed', {
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, {
         orderId: payload?.orderId,
         reason: "Insufficient stock"
       });

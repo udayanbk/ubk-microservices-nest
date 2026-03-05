@@ -2,6 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { EventPattern, ClientKafka } from "@nestjs/microservices";
 import { PaymentService } from "./payment.service";
 import { retryWithBackoff } from "libs/common/retry";
+import { KafkaTopics } from "@ecom/kafka/topics";
 
 @Controller()
 export class PaymentEventsController {
@@ -13,7 +14,7 @@ export class PaymentEventsController {
     private kafkaClient: ClientKafka
   ) { }
 
-  @EventPattern('inventory.reserved')
+  @EventPattern(KafkaTopics.INVENTORY_RESERVED)
   async handleInventoryReserved(data: any) {
 
     console.log("🔥 RAW PAYMENT EVENT DATA:", data);
@@ -36,7 +37,7 @@ export class PaymentEventsController {
 
       console.log("✅ Payment succeeded after retry logic");
 
-      this.kafkaClient.emit('payment.processed', {
+      this.kafkaClient.emit(KafkaTopics.PAYMENT_PROCESSED, {
         orderId: payload.orderId
       });
 
@@ -47,13 +48,13 @@ export class PaymentEventsController {
       console.log("❌ All retries failed:", error.message);
 
       // 1️⃣ Business failure (order saga must continue)
-      this.kafkaClient.emit('payment.failed', {
+      this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED, {
         orderId: payload.orderId
       });
 
       // 2️⃣ System failure log
-      this.kafkaClient.emit("payment.failed.dlq", {
-        topic: "inventory.reserved",
+      this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED_DLQ, {
+        topic: KafkaTopics.INVENTORY_RESERVED,
         payload,
         error: error.message,
         service: "payment-service"

@@ -1,6 +1,7 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { PrismaService } from "@ecom/database";
 import { ClientKafka } from "@nestjs/microservices";
+import { KafkaTopics } from "@ecom/kafka/topics";
 
 @Injectable()
 export class OrderService {
@@ -14,7 +15,7 @@ export class OrderService {
 
   async onModuleInit() {
     // Required for Kafka response topics
-    this.kafkaClient.subscribeToResponseOf('payment.processed');
+    this.kafkaClient.subscribeToResponseOf(KafkaTopics.PAYMENT_PROCESSED);
     await this.kafkaClient.connect();
     console.log("🟢 Order Service connected to Kafka");
   }
@@ -79,7 +80,7 @@ export class OrderService {
     console.log("📤 Emitting order.created event");
     await this.prisma.outboxEvent.create({
       data: {
-        topic: "order.created",
+        topic: KafkaTopics.ORDER_CREATED,
         payload: {
           orderId: order.id,
           productId,

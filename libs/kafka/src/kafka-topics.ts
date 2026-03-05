@@ -1,4 +1,5 @@
 import { Kafka } from "kafkajs";
+import { KafkaTopics } from "./topics";
 
 const kafka = new Kafka({
   clientId: "topic-manager",
@@ -14,32 +15,32 @@ export async function createKafkaTopics() {
   await admin.createTopics({
     topics: [
       {
-        topic: "order.created",
+        topic: KafkaTopics.ORDER_CREATED,
         numPartitions: 3,
         replicationFactor: 1,
       },
       {
-        topic: "inventory.reserved",
+        topic: KafkaTopics.INVENTORY_RESERVED,
         numPartitions: 3,
         replicationFactor: 1,
       },
       {
-        topic: "inventory.failed",
+        topic: KafkaTopics.INVENTORY_FAILED,
         numPartitions: 3,
         replicationFactor: 1,
       },
       {
-        topic: "payment.processed",
+        topic: KafkaTopics.PAYMENT_PROCESSED,
         numPartitions: 3,
         replicationFactor: 1,
       },
       {
-        topic: "payment.failed",
+        topic: KafkaTopics.PAYMENT_FAILED,
         numPartitions: 3,
         replicationFactor: 1,
       },
       {
-        topic: "payment.failed.dlq",
+        topic: KafkaTopics.PAYMENT_FAILED_DLQ,
         numPartitions: 1,
         replicationFactor: 1,
       }
