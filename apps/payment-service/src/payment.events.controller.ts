@@ -5,6 +5,7 @@ import { retryWithBackoff } from "libs/common/retry";
 import { KafkaTopics } from "libs/events/topics";
 import { PaymentFailedDlqEvent, PaymentFailedEvent, PaymentProcessedEvent } from "libs/events/payment.event";
 import { InventoryReservedEvent } from "libs/events/inventory.events";
+import { extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class PaymentEventsController {
@@ -21,7 +22,7 @@ export class PaymentEventsController {
 
     console.log("🔥 RAW PAYMENT EVENT DATA:", data);
 
-    const payload: InventoryReservedEvent = data?.value ?? data;
+    const payload = extractKafkaPayload<InventoryReservedEvent>(data);
 
     console.log("💳 Parsed payload:", payload);
 

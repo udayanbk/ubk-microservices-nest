@@ -15,8 +15,7 @@ export class DlqEventsController {
 
     console.log("🚨 DLQ EVENT RECEIVED");
 
-    const payload: PaymentFailedDlqEvent = data?.value ?? data;
-    // const payload: extractKafkaPayload<PaymentFailedDlqEvent>(data);
+    const payload = extractKafkaPayload<PaymentFailedDlqEvent>(data);
 
     console.log(payload);
 

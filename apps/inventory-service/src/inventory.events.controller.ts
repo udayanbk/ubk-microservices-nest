@@ -4,6 +4,7 @@ import { InventoryService } from "./inventory.service";
 import { KafkaTopics } from "libs/events/topics";
 import { InventoryFailedEvent, InventoryReservedEvent } from "libs/events/inventory.events";
 import type { OrderCreatedEvent } from "libs/events/order.events";
+import { extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class InventoryEventsController {
@@ -20,7 +21,7 @@ export class InventoryEventsController {
 
     console.log("🔥 RAW EVENT DATA:", data);
 
-    const payload: OrderCreatedEvent = data?.value ?? data;
+    const payload = extractKafkaPayload<OrderCreatedEvent>(data);
 
     console.log("📦 Parsed payload:", payload);
 
