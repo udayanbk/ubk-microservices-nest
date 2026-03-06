@@ -2,7 +2,9 @@ import { Controller, Inject } from "@nestjs/common";
 import { EventPattern, ClientKafka } from "@nestjs/microservices";
 import { PaymentService } from "./payment.service";
 import { retryWithBackoff } from "libs/common/retry";
-import { KafkaTopics } from "@ecom/kafka/topics";
+import { KafkaTopics } from "libs/events/topics";
+import { PaymentFailedDlqEvent, PaymentFailedEvent, PaymentProcessedEvent } from "libs/events/payment.event";
+import { InventoryReservedEvent } from "libs/events/inventory.events";
 
 @Controller()
 export class PaymentEventsController {
@@ -19,7 +21,7 @@ export class PaymentEventsController {
 
     console.log("🔥 RAW PAYMENT EVENT DATA:", data);
 
-    const payload = data?.value ?? data;
+    const payload: InventoryReservedEvent = data?.value ?? data;
 
     console.log("💳 Parsed payload:", payload);
 
@@ -37,9 +39,11 @@ export class PaymentEventsController {
 
       console.log("✅ Payment succeeded after retry logic");
 
-      this.kafkaClient.emit(KafkaTopics.PAYMENT_PROCESSED, {
+      const paymentEvent: PaymentProcessedEvent = {
         orderId: payload.orderId
-      });
+      }
+
+      this.kafkaClient.emit(KafkaTopics.PAYMENT_PROCESSED, paymentEvent);
 
       console.log("📤 payment.processed emitted");
 
@@ -48,17 +52,19 @@ export class PaymentEventsController {
       console.log("❌ All retries failed:", error.message);
 
       // 1️⃣ Business failure (order saga must continue)
-      this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED, {
+      const paymentFailedEvent: PaymentFailedEvent = {
         orderId: payload.orderId
-      });
+      }
+      this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED, paymentFailedEvent);
 
       // 2️⃣ System failure log
-      this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED_DLQ, {
+      const paymentFailedDlqEvent: PaymentFailedDlqEvent = {
         topic: KafkaTopics.INVENTORY_RESERVED,
         payload,
         error: error.message,
         service: "payment-service"
-      });
+      }
+      this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED_DLQ, paymentFailedDlqEvent);
       console.log("📤 catch block -- payment.failed emitted");
     }
 

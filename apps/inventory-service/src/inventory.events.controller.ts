@@ -1,7 +1,9 @@
 import { Controller, Inject } from "@nestjs/common";
 import { EventPattern, ClientKafka } from "@nestjs/microservices";
 import { InventoryService } from "./inventory.service";
-import { KafkaTopics } from "@ecom/kafka/topics";
+import { KafkaTopics } from "libs/events/topics";
+import { InventoryFailedEvent, InventoryReservedEvent } from "libs/events/inventory.events";
+import type { OrderCreatedEvent } from "libs/events/order.events";
 
 @Controller()
 export class InventoryEventsController {
@@ -18,7 +20,7 @@ export class InventoryEventsController {
 
     console.log("🔥 RAW EVENT DATA:", data);
 
-    const payload = data?.value ?? data;
+    const payload: OrderCreatedEvent = data?.value ?? data;
 
     console.log("📦 Parsed payload:", payload);
 
@@ -31,11 +33,13 @@ export class InventoryEventsController {
 
       console.log("✅ Stock reduced successfully");
 
-      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, {
+      const event: InventoryReservedEvent = {
         orderId: payload.orderId,
         productId: payload.productId,
         quantity: payload.quantity
-      });
+      }
+
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, event);
 
       console.log("📤 inventory.reserved emitted");
 
@@ -43,10 +47,12 @@ export class InventoryEventsController {
 
       console.log("❌ Stock reduction failed:", error.message);
 
-      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, {
+      const event: InventoryFailedEvent = {
         orderId: payload?.orderId,
         reason: "Insufficient stock"
-      });
+      }
+
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, event);
 
       console.log("📤 inventory.failed emitted");
     }

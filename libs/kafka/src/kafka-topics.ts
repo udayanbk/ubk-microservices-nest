@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import { KafkaTopics } from "./topics";
+import { KafkaTopics } from "../../events/topics";
 
 const kafka = new Kafka({
   clientId: "topic-manager",

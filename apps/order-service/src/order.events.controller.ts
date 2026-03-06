@@ -1,7 +1,9 @@
 import { Controller } from "@nestjs/common";
 import { EventPattern } from "@nestjs/microservices";
 import { OrderService } from "./order.service";
-import { KafkaTopics } from "@ecom/kafka/topics";
+import { KafkaTopics } from "libs/events/topics";
+import { PaymentFailedDlqEvent, PaymentFailedEvent, PaymentProcessedEvent } from "libs/events/payment.event";
+import { InventoryFailedEvent } from "libs/events/inventory.events";
 
 @Controller()
 export class OrderEventsController {
@@ -13,7 +15,7 @@ async handlePaymentProcessed(data: any) {
 
   console.log("🔥 RAW payment.processed event:", data);
 
-  const payload = data?.value ?? data;
+  const payload: PaymentProcessedEvent = data?.value ?? data;
 
   console.log("💳 Parsed payment.processed payload:", payload);
 
@@ -28,7 +30,7 @@ async handlePaymentFailed(data: any) {
 
   console.log("🔥 RAW payment.failed event:", data);
 
-  const payload = data?.value ?? data;
+  const payload: PaymentFailedEvent = data?.value ?? data;
 
   console.log("❌ Parsed payment.failed payload:", payload);
 
@@ -43,7 +45,7 @@ async handleInventoryFailed(data: any) {
 
   console.log("🔥 RAW inventory.failed event:", data);
 
-  const payload = data?.value ?? data;
+  const payload: InventoryFailedEvent = data?.value ?? data;
 
   console.log("❌ Parsed inventory.failed payload:", payload);
 

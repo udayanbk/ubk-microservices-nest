@@ -1,7 +1,7 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { PrismaService } from "@ecom/database";
 import { ClientKafka } from "@nestjs/microservices";
-import { KafkaTopics } from "@ecom/kafka/topics";
+import { KafkaTopics } from "libs/events/topics";
 
 @Injectable()
 export class OrderService {
