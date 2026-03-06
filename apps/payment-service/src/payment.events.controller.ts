@@ -5,7 +5,7 @@ import { retryWithBackoff } from "libs/common/retry";
 import { KafkaTopics } from "libs/events/topics";
 import { PaymentFailedDlqEvent, PaymentFailedEvent, PaymentProcessedEvent } from "libs/events/payment.event";
 import { InventoryReservedEvent } from "libs/events/inventory.events";
-import { extractKafkaPayload } from "@ecom/kafka";
+import { createEvent, extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class PaymentEventsController {
@@ -40,9 +40,11 @@ export class PaymentEventsController {
 
       console.log("✅ Payment succeeded after retry logic");
 
-      const paymentEvent: PaymentProcessedEvent = {
+      const e_1: PaymentProcessedEvent = {
         orderId: payload.orderId
       }
+
+      const paymentEvent = createEvent(KafkaTopics.PAYMENT_PROCESSED, e_1)
 
       this.kafkaClient.emit(KafkaTopics.PAYMENT_PROCESSED, paymentEvent);
 
@@ -53,18 +55,20 @@ export class PaymentEventsController {
       console.log("❌ All retries failed:", error.message);
 
       // 1️⃣ Business failure (order saga must continue)
-      const paymentFailedEvent: PaymentFailedEvent = {
+      const e_2: PaymentFailedEvent = {
         orderId: payload.orderId
       }
+      const paymentFailedEvent = createEvent(KafkaTopics.PAYMENT_FAILED, e_2)
       this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED, paymentFailedEvent);
 
       // 2️⃣ System failure log
-      const paymentFailedDlqEvent: PaymentFailedDlqEvent = {
+      const e_3: PaymentFailedDlqEvent = {
         topic: KafkaTopics.INVENTORY_RESERVED,
         payload,
         error: error.message,
         service: "payment-service"
       }
+      const paymentFailedDlqEvent = createEvent(KafkaTopics.PAYMENT_FAILED_DLQ,e_3);
       this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED_DLQ, paymentFailedDlqEvent);
       console.log("📤 catch block -- payment.failed emitted");
     }

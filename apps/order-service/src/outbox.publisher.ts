@@ -2,6 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "@ecom/database";
 import { ClientKafka } from "@nestjs/microservices";
+import { createEvent } from "@ecom/kafka";
 
 @Injectable()
 export class OutboxPublisher {
@@ -28,7 +29,9 @@ export class OutboxPublisher {
 
       console.log("📤 Publishing event:", event.topic);
 
-      await this.kafkaClient.emit(event.topic, event.payload);
+      const e = createEvent(event.topic, event.payload)
+
+      await this.kafkaClient.emit(event.topic, e);
 
       await this.prisma.outboxEvent.update({
         where: { id: event.id },

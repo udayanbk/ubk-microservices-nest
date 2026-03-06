@@ -4,7 +4,7 @@ import { InventoryService } from "./inventory.service";
 import { KafkaTopics } from "libs/events/topics";
 import { InventoryFailedEvent, InventoryReservedEvent } from "libs/events/inventory.events";
 import type { OrderCreatedEvent } from "libs/events/order.events";
-import { extractKafkaPayload } from "@ecom/kafka";
+import { createEvent, extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class InventoryEventsController {
@@ -34,13 +34,14 @@ export class InventoryEventsController {
 
       console.log("✅ Stock reduced successfully");
 
-      const event: InventoryReservedEvent = {
+      const e: InventoryReservedEvent = {
         orderId: payload.orderId,
         productId: payload.productId,
         quantity: payload.quantity
       }
+      const invResEvent = createEvent(KafkaTopics.INVENTORY_RESERVED, e)
 
-      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, event);
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, invResEvent);
 
       console.log("📤 inventory.reserved emitted");
 
@@ -48,12 +49,14 @@ export class InventoryEventsController {
 
       console.log("❌ Stock reduction failed:", error.message);
 
-      const event: InventoryFailedEvent = {
+      const e: InventoryFailedEvent = {
         orderId: payload?.orderId,
         reason: "Insufficient stock"
       }
 
-      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, event);
+      const invFailEvent = createEvent(KafkaTopics.INVENTORY_FAILED, e)
+
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, invFailEvent);
 
       console.log("📤 inventory.failed emitted");
     }
