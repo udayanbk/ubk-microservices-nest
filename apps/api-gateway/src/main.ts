@@ -82,7 +82,8 @@ async function bootstrap() {
 
   const port = process.env.GATEWAY_PORT || 9900;
 
-  await app.listen(port);
+  // await app.listen(port);
+  await app.listen(port, "0.0.0.0");
 
   console.log("Gateway running on port:", port);
 }

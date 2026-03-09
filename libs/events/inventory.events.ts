@@ -6,5 +6,6 @@ export interface InventoryReservedEvent {
 
 export interface InventoryFailedEvent {
   orderId: string;
+  productId: string;
   reason: string
 }

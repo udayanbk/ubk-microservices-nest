@@ -7,6 +7,7 @@ import { OrderService } from "./order.service";
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { OrderEventsController } from "./order.events.controller";
 import { OutboxPublisher } from "./outbox.publisher";
+import { HealthController } from "./health.controller";
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { OutboxPublisher } from "./outbox.publisher";
     PrismaModule,
     ScheduleModule.forRoot()
   ],
-  controllers: [OrderController, OrderEventsController],
+  controllers: [HealthController, OrderController, OrderEventsController],
   providers: [OrderService, OutboxPublisher],
 })
 

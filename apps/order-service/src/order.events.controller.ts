@@ -4,7 +4,7 @@ import { OrderService } from "./order.service";
 import { KafkaTopics } from "libs/events/topics";
 import { PaymentFailedDlqEvent, PaymentFailedEvent, PaymentProcessedEvent } from "libs/events/payment.event";
 import { InventoryFailedEvent } from "libs/events/inventory.events";
-import { extractKafkaPayload } from "@ecom/kafka";
+import { EventEnvelope, extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class OrderEventsController {
@@ -16,13 +16,13 @@ async handlePaymentProcessed(data: any) {
 
   console.log("🔥 RAW payment.processed event:", data);
 
-  const payload = extractKafkaPayload<PaymentProcessedEvent>(data)
+  const payload = extractKafkaPayload<EventEnvelope<PaymentProcessedEvent>>(data)
 
   console.log("💳 Parsed payment.processed payload:", payload);
 
-  await this.orderService.markPaid(payload.orderId);
+  await this.orderService.markPaid(payload?.payload?.orderId);
 
-  console.log("✅ Order marked PAID:", payload.orderId);
+  console.log("✅ Order marked PAID:", payload?.payload?.orderId);
 }
 
 
@@ -31,13 +31,13 @@ async handlePaymentFailed(data: any) {
 
   console.log("🔥 RAW payment.failed event:", data);
 
-  const payload = extractKafkaPayload<PaymentFailedEvent>(data)
+  const payload = extractKafkaPayload<EventEnvelope<PaymentFailedEvent>>(data)
 
   console.log("❌ Parsed payment.failed payload:", payload);
 
-  await this.orderService.markFailed(payload.orderId);
+  await this.orderService.markFailed(payload?.payload?.orderId);
 
-  console.log("⚠ Order marked FAILED:", payload.orderId);
+  console.log("⚠ Order marked FAILED:", payload?.payload?.orderId);
 }
 
 
@@ -46,12 +46,12 @@ async handleInventoryFailed(data: any) {
 
   console.log("🔥 RAW inventory.failed event:", data);
 
-  const payload = extractKafkaPayload<InventoryFailedEvent>(data)
+  const payload = extractKafkaPayload<EventEnvelope<InventoryFailedEvent>>(data)
 
   console.log("❌ Parsed inventory.failed payload:", payload);
 
-  await this.orderService.markFailed(payload.orderId);
+  await this.orderService.markFailed(payload?.payload?.orderId);
 
-  console.log("⚠ Order marked FAILED:", payload.orderId);
+  console.log("⚠ Order marked FAILED:", payload?.payload?.orderId);
 }
 }

@@ -12,7 +12,8 @@ async function bootstrap() {
 
   const port = process.env.USER_PORT || 9902;
 
-  await app.listen(port);
+  // await app.listen(port);
+  await app.listen(port, "0.0.0.0");
 
   console.log("🟢 User Service running on port:", port);
 

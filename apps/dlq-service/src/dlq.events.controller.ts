@@ -3,7 +3,7 @@ import { EventPattern } from "@nestjs/microservices";
 import { DlqService } from "./dlq.service";
 import { KafkaTopics } from "libs/events/topics";
 import { PaymentFailedDlqEvent } from "libs/events/payment.event";
-import { extractKafkaPayload } from "@ecom/kafka";
+import { EventEnvelope, extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class DlqEventsController {
@@ -15,11 +15,11 @@ export class DlqEventsController {
 
     console.log("🚨 DLQ EVENT RECEIVED");
 
-    const payload = extractKafkaPayload<PaymentFailedDlqEvent>(data);
+    const payload = extractKafkaPayload<EventEnvelope<PaymentFailedDlqEvent>>(data);
 
-    console.log(payload);
+    console.log("payload >>>>", payload);
 
-    await this.dlqService.saveEvent(payload);
+    await this.dlqService.saveEvent(payload?.payload);
 
   }
 

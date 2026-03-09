@@ -4,6 +4,7 @@ import { PrismaModule } from "@ecom/database";
 import { InventoryController } from "./inventory.controller";
 import { InventoryService } from "./inventory.service";
 import { InventoryEventsController } from "./inventory.events.controller";
+import { HealthController } from "./health.controller";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { InventoryEventsController } from "./inventory.events.controller";
     ]),
   ],
   controllers: [
+    HealthController,
     InventoryController,
     InventoryEventsController
   ],

@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build order-service && nest build inventory-service && nest build payment-service && nest build dlq-service",
+    "build": "nest build api-gateway && nest build auth-service && nest build user-service && nest build product-service && nest build order-service && nest build inventory-service && nest build payment-service && nest build dlq-service",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -17,7 +17,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/ecommerce/test/jest-e2e.json"
+    "test:e2e": "jest --config ./apps/ecommerce/test/jest-e2e.json",
+    "migrate:main": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "migrate:logs": "prisma migrate deploy --schema=libs/logs-database/prisma/schema.prisma",
+    "migrate:all": "npm run migrate:main && npm run migrate:logs"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

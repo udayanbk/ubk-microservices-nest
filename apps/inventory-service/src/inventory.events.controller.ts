@@ -4,7 +4,7 @@ import { InventoryService } from "./inventory.service";
 import { KafkaTopics } from "libs/events/topics";
 import { InventoryFailedEvent, InventoryReservedEvent } from "libs/events/inventory.events";
 import type { OrderCreatedEvent } from "libs/events/order.events";
-import { createEvent, extractKafkaPayload } from "@ecom/kafka";
+import { createEvent, EventEnvelope, extractKafkaPayload } from "@ecom/kafka";
 
 @Controller()
 export class InventoryEventsController {
@@ -19,46 +19,55 @@ export class InventoryEventsController {
   @EventPattern(KafkaTopics.ORDER_CREATED)
   async handleOrderCreated(data: any) {
 
-    console.log("🔥 RAW EVENT DATA:", data);
+    const event = data as EventEnvelope<OrderCreatedEvent>
+    const payload = event.payload
+    console.log("📦 EVENT:", event)
+    console.log("📦 ORDER_CREATED payload:", payload)
 
-    const payload = extractKafkaPayload<OrderCreatedEvent>(data);
-
-    console.log("📦 Parsed payload:", payload);
+    if (!payload?.orderId || !payload?.productId) {
+      console.error("❌ Invalid ORDER_CREATED payload", payload)
+      return
+    }
 
     try {
 
       await this.inventoryService.reduceStock(
         payload.productId,
         payload.quantity
-      );
-
-      console.log("✅ Stock reduced successfully");
+      )
 
       const e: InventoryReservedEvent = {
         orderId: payload.orderId,
         productId: payload.productId,
         quantity: payload.quantity
       }
+
       const invResEvent = createEvent(KafkaTopics.INVENTORY_RESERVED, e)
 
-      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, invResEvent);
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_RESERVED, invResEvent)
 
-      console.log("📤 inventory.reserved emitted");
+      console.log("📤 inventory.reserved emitted")
 
     } catch (error) {
 
-      console.log("❌ Stock reduction failed:", error.message);
+      console.error("❌ Stock reduction failed:", error.message)
+
+      if(!payload?.orderId){
+        console.log("missing orderid for inventory.failed event", payload);
+        return
+      }
 
       const e: InventoryFailedEvent = {
-        orderId: payload?.orderId,
+        orderId: payload.orderId,
+        productId: payload.productId,
         reason: "Insufficient stock"
       }
 
       const invFailEvent = createEvent(KafkaTopics.INVENTORY_FAILED, e)
 
-      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, invFailEvent);
+      this.kafkaClient.emit(KafkaTopics.INVENTORY_FAILED, invFailEvent)
 
-      console.log("📤 inventory.failed emitted");
+      console.log("📤 inventory.failed emitted")
     }
   }
 }

@@ -26,7 +26,8 @@ async function bootstrap() {
   await app.startAllMicroservices();
 
   const port = process.env.PAYMENT_PORT || 9906;
-  await app.listen(port);
+  // await app.listen(port);
+  await app.listen(port, "0.0.0.0");
 
   console.log("🟢 Payment Service running on port:", port);
   console.log("🟢 Kafka connected for Payment Service");

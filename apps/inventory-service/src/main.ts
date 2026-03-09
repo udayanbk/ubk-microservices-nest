@@ -27,7 +27,8 @@ async function bootstrap() {
   await app.startAllMicroservices();
 
   const port = process.env.INVENTORY_PORT!;
-  await app.listen(port);
+  // await app.listen(port);
+  await app.listen(port, "0.0.0.0");
 
   console.log("🟢 Inventory Service running on port:", port);
   console.log("🟢 Kafka connected for Inventory Service");

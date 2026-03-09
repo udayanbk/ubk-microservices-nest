@@ -36,9 +36,11 @@ export class OrderService {
       where: { key: idempotencyKey }
     });
 
+    console.log("existing >> ", existing)
+
     if (existing?.orderId) {
 
-      console.log("⚠ Duplicate request detected");
+      console.log("⚠ Duplicate request detected", existing?.orderId);
 
       return this.prisma.order.findUnique({
         where: { id: existing.orderId }

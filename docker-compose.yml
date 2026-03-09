@@ -1,5 +1,18 @@
 services:
 
+  migration-runner:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npx prisma migrate deploy --schema=prisma/schema.prisma && npx prisma migrate deploy --schema=libs/logs-database/prisma/schema.prisma"
+    env_file:
+      - .env.docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -7,6 +20,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "${ZOOKEEPER_PORT}:2181"
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -23,18 +37,25 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/9092"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
       - "${KAFKA_UI_PORT}:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BROKER}
-
+    restart: unless-stopped
 
   postgres:
     image: postgres:15
@@ -47,6 +68,13 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
 
   postgres_logs:
@@ -60,6 +88,13 @@ services:
       - "${POSTGRES_LOGS_PORT}:5432"
     volumes:
       - postgres_logs_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
 
   redis:
@@ -68,6 +103,99 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
 
+  api-gateway:
+    image: node:20
+    container_name: api-gateway
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/api-gateway/main.js
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    restart: unless-stopped
+
+  auth-service:
+    image: node:20
+    container_name: auth-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/auth-service/main.js
+    ports:
+      - "${AUTH_PORT}:${AUTH_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9901/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  user-service:
+    image: node:20
+    container_name: user-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/user-service/main.js
+    ports:
+      - "${USER_PORT}:${USER_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9902/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  product-service:
+    image: node:20
+    container_name: product-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/product-service/main.js
+    ports:
+      - "${PRODUCT_PORT}:${PRODUCT_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9903/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   order-service:
     image: node:20
@@ -77,16 +205,24 @@ services:
       - .:/app
     command: node dist/apps/order-service/main.js
     ports:
-      - "${ORDER_PORT}:9905"
+      - "${ORDER_PORT}:${ORDER_PORT}"
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     # environment:
     #   DATABASE_URL: ${DATABASE_URL}
     #   KAFKA_BROKER: kafka:29092
     env_file:
       - .env.docker
-
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9905/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   inventory-service:
     image: node:20
@@ -98,13 +234,22 @@ services:
     ports:
       - "${INVENTORY_PORT}:9904"
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     # environment:
     #   DATABASE_URL: ${DATABASE_URL}
     #   KAFKA_BROKER: kafka:29092
     env_file:
       - .env.docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9904/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
 
   payment-service:
@@ -117,13 +262,22 @@ services:
     ports:
       - "${PAYMENT_PORT}:9906"
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     # environment:
     #   DATABASE_URL: ${DATABASE_URL}
     #   KAFKA_BROKER: kafka:29092
     env_file:
       - .env.docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9906/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
 
   dlq-service:
@@ -134,13 +288,16 @@ services:
       - .:/app
     command: node dist/apps/dlq-service/main.js
     depends_on:
-      - kafka
-      - postgres_logs
+      kafka:
+        condition: service_healthy
+      postgres_logs:
+        condition: service_healthy
     # environment:
     #   LOGS_DATABASE_URL: ${LOGS_DATABASE_URL}
     #   KAFKA_BROKER: kafka:29092
     env_file:
       - .env.docker
+    restart: unless-stopped
 
 
 volumes:

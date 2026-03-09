@@ -18,13 +18,13 @@ export class AuthController {
     return this.authService.login(body.email,body.password);
   }
 
-  @Get()
-  getHello(): string {
-    return this.authService.getHello();
-  }
+  // @Get()
+  // getHello(): string {
+  //   return this.authService.getHello();
+  // }
 
-  @Get("health")
-  health() {
-    return "Auth service running";
-  }
+  // @Get("health")
+  // health() {
+  //   return "Auth service running";
+  // }
 }

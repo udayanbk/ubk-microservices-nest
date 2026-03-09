@@ -6,10 +6,9 @@ export class InventoryService {
 
   constructor(private prisma: PrismaService) { }
 
-
-  getHello(): string {
-    return 'Hello World!';
-  }
+  // getHello(): string {
+  //   return 'Hello World!';
+  // }
 
   async setStock(productId: string, stock: number) {
 

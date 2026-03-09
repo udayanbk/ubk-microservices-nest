@@ -28,6 +28,7 @@ export class OutboxPublisher {
     for (const event of events) {
 
       console.log("📤 Publishing event:", event.topic);
+      
 
       const e = createEvent(event.topic, event.payload)
 

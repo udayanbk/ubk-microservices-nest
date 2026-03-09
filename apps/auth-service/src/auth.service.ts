@@ -79,9 +79,9 @@ export class AuthService {
     return { token };
   }
 
-  getHello(): string {
-    return 'Hello World!';
-  }
+  // getHello(): string {
+  //   return 'Hello World!';
+  // }
 
 }
 
