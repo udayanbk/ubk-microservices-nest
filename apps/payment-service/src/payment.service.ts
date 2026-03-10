@@ -49,7 +49,7 @@ export class PaymentService {
 
   async processPayment(orderId: string, amount: number) {
     console.log("💳 Processing payment for order:", orderId);
-    throw new Error("Testing Payment Gateway down...!!!")
+    // throw new Error("Testing Payment Gateway down...!!!")
     const result = await this.paymentBreaker.fire({
       orderId,
       amount
