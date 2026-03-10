@@ -151,6 +151,12 @@ export class OrderService {
       data: { status: "FAILED" }
     });
   }
+
+  async getOrder(orderId: string) {
+    return this.prisma.order.findUnique({
+      where: { id: orderId }
+    });
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

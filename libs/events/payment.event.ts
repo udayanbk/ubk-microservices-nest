@@ -4,6 +4,8 @@ export interface PaymentProcessedEvent {
 
 export interface PaymentFailedEvent {
   orderId: string;
+  productId: string;
+  quantity: number;
   reason?: string;
 }
 

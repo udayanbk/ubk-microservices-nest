@@ -4,7 +4,8 @@ import { EventEnvelope } from "./event-envelope"
 export function createEvent<T>(
   eventType: string,
   payload: T,
-  version = "v1"
+  version = "v1",
+  retryCount = 0
 ): EventEnvelope<T> {
 
   return {
@@ -12,6 +13,7 @@ export function createEvent<T>(
     eventType,
     version,
     timestamp: new Date().toISOString(),
+    retryCount,
     payload
   }
 }

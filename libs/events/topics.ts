@@ -5,4 +5,6 @@ export enum KafkaTopics {
   PAYMENT_PROCESSED = "payment.processed",
   PAYMENT_FAILED = "payment.failed",
   PAYMENT_FAILED_DLQ = "payment.failed.dlq",
+  PAYMENT_FAILED_RETRY = "payment.failed.retry",
+  INVENTORY_RELEASE = "inventory.release"
 }

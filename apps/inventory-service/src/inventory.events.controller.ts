@@ -2,7 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { EventPattern, ClientKafka } from "@nestjs/microservices";
 import { InventoryService } from "./inventory.service";
 import { KafkaTopics } from "libs/events/topics";
-import { InventoryFailedEvent, InventoryReservedEvent } from "libs/events/inventory.events";
+import { InventoryFailedEvent, InventoryReleaseEvent, InventoryReservedEvent } from "libs/events/inventory.events";
 import type { OrderCreatedEvent } from "libs/events/order.events";
 import { createEvent, EventEnvelope, extractKafkaPayload } from "@ecom/kafka";
 
@@ -52,7 +52,7 @@ export class InventoryEventsController {
 
       console.error("❌ Stock reduction failed:", error.message)
 
-      if(!payload?.orderId){
+      if (!payload?.orderId) {
         console.log("missing orderid for inventory.failed event", payload);
         return
       }
@@ -69,5 +69,21 @@ export class InventoryEventsController {
 
       console.log("📤 inventory.failed emitted")
     }
+  }
+
+  @EventPattern(KafkaTopics.INVENTORY_RELEASE)
+  async handleInventoryRelease(data: any) {
+
+    const event = extractKafkaPayload<EventEnvelope<InventoryReleaseEvent>>(data)
+    const payload = event.payload
+
+    console.log("♻ inventory.release received", payload)
+
+    await this.inventoryService.increaseStock(
+      payload.productId,
+      payload.quantity
+    )
+
+    console.log("✅ Stock restored")
   }
 }

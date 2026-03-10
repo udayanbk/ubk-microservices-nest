@@ -118,6 +118,15 @@
         "tsConfigPath": "apps/product-service/tsconfig.app.json"
       }
     },
+    "retry-service": {
+      "type": "application",
+      "root": "apps/retry-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/retry-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/retry-service/tsconfig.app.json"
+      }
+    },
     "user-service": {
       "type": "application",
       "root": "apps/user-service",

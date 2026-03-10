@@ -3,5 +3,6 @@ export interface EventEnvelope<T> {
   eventType: string
   version: string
   timestamp: string
+  retryCount?: number
   payload: T
 }

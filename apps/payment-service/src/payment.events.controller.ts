@@ -56,7 +56,9 @@ export class PaymentEventsController {
 
       // 1️⃣ Business failure (order saga must continue)
       const e_2: PaymentFailedEvent = {
-        orderId: payload?.payload?.orderId
+        orderId: payload?.payload?.orderId,
+        productId: payload?.payload?.productId,
+        quantity: payload?.payload?.quantity
       }
       const paymentFailedEvent = createEvent(KafkaTopics.PAYMENT_FAILED, e_2)
       this.kafkaClient.emit(KafkaTopics.PAYMENT_FAILED, paymentFailedEvent);

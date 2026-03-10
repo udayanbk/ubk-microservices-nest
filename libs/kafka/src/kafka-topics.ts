@@ -40,7 +40,17 @@ export async function createKafkaTopics() {
         replicationFactor: 1,
       },
       {
+        topic: KafkaTopics.PAYMENT_FAILED_RETRY,
+        numPartitions: 1,
+        replicationFactor: 1,
+      },
+      {
         topic: KafkaTopics.PAYMENT_FAILED_DLQ,
+        numPartitions: 1,
+        replicationFactor: 1,
+      },
+      {
+        topic: KafkaTopics.INVENTORY_RELEASE,
         numPartitions: 1,
         replicationFactor: 1,
       }

@@ -9,3 +9,9 @@ export interface InventoryFailedEvent {
   productId: string;
   reason: string
 }
+
+export interface InventoryReleaseEvent {
+  orderId: string;
+  productId: string;
+  quantity: number;
+}

@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build api-gateway && nest build auth-service && nest build user-service && nest build product-service && nest build order-service && nest build inventory-service && nest build payment-service && nest build dlq-service",
+    "build": "nest build api-gateway && nest build auth-service && nest build user-service && nest build product-service && nest build order-service && nest build inventory-service && nest build payment-service && nest build dlq-service && nest build retry-service",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
