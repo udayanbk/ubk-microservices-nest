@@ -311,6 +311,20 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+        
+  email-service:
+    image: node:20
+    container_name: email-service
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: node dist/apps/email-service/main.js
+    env_file:
+      - .env.docker
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
 
 
 volumes:
